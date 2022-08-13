@@ -1,0 +1,14 @@
+---
+- name: Cleanup Docker on system
+  hosts: allhosts
+  tasks:
+   - name: remove docker software
+     ansible.builtin.yum:
+       name: docker
+       state: absent
+   - name: remove docker group
+     ansible.builtin.group:
+       name: docker
+       state: absent
+
+
