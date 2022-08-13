@@ -1,14 +1,53 @@
 ---
-- name: Cleanup Docker on system
+#- name: Cleanup Docker on system
+#  hosts: allhosts
+#  tasks:
+#   - name: remove docker software
+#     ansible.builtin.yum:
+#       name: docker
+#       state: absent
+#   - name: remove docker group
+#     ansible.builtin.group:
+#       name: docker
+#       state: absent
+
+- name: Install docker on system
   hosts: allhosts
   tasks:
-   - name: remove docker software
-     ansible.builtin.yum:
-       name: docker
-       state: absent
-   - name: remove docker group
-     ansible.builtin.group:
-       name: docker
-       state: absent
+    - name: check internet connectivity
+      ansible.builtin.shell:
+        cmd: ping -c1 -W1 www.google.com
+      register: ping_status
+      ignore_errors: yes
 
+    - name: check status
+      ansible.builtin.fail:
+        msg: "gadbad"
+      when: ping_status.rc != 0
+      loop: 
+        - "{{ ping_status.stdout }}"
+    - name: download repo file
+      local_action: ansible.builtin.get_url url=https://download.docker.com/linux/centos/docker-ce.repo dest=/home/puneet/docker
+    - name: copy repo 
+      ansible.builtin.copy:
+        src: /home/puneet/docker/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+
+    - name: install docker
+      ansible.builtin.yum:
+        name: docker-ce
+        state: present
+    - name: create group
+      ansible.builtin.group:
+        name: docker
+        state: present
+    - name: add user to group
+      ansible.builtin.user:
+        name: puneet
+        append: yes
+        groups: docker
+    - name: start docker service
+      ansible.builtin.service:
+        name: docker
+        state: started
 
